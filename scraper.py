@@ -4,7 +4,6 @@ from selenium.common.exceptions import InvalidArgumentException, NoSuchElementEx
 import sys
 import time
 import os
-import pickle #TODO - Remove
 import string
 import re
 import urllib.request
