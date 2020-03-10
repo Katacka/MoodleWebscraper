@@ -20,7 +20,7 @@ Assuming Python 3 has been installed
     _sudo chown root:root /usr/local/bin/chromedriver_\
     _sudo chmod 0755 /usr/local/bin/chromedriver_\
     
-# Execution
+## Execution
 
 Run _python scraper.py <moodle_username> <moodle_password>_
     
