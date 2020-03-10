@@ -309,10 +309,6 @@ loginMoodle(driver, 1)
 courses = scrapeCourseMetadata(driver, 1)
 courses = downloadCourseData(driver, courses)
 
-#TODO - Delete
-pickle.dump(courses, open("courses", "wb"))
-#courses = pickle.load(open("courses", "rb"))
-
 #Re-organize files
 organizeFiles(courses, "files/")
 
