@@ -60,29 +60,35 @@ def query_moodle(web_driver: WebDriver) -> None:
 def login_to_moodle(web_driver: WebDriver, load_speed: int) -> None:
     # Login if necessary
     try:
-        # Enter email/username
         email_input = web_driver.find_element_by_id("i0116")
-        email_input.send_keys(sys.argv[1])
-        web_driver.find_element_by_id("idSIButton9").click()
-        time.sleep(load_speed)
-
-        # Enter password
         pass_input = web_driver.find_element_by_id("i0118")
-        pass_input.send_keys(getpass())  # Hides password input to terminal
-        web_driver.find_element_by_id("idSIButton9").click()
-        time.sleep(load_speed)
+    except NoSuchElementException:
+        return  # Login not required (i.e. user already logged in)? Debug with non-headless browser if errors propagate
 
-        # Navigate off login page
-        web_driver.find_element_by_id("idSIButton9").click()
-
-    except IndexError:
+    if len(sys.argv) < 2:
         print("ERROR: Improper CLI format")
-        print("Please use: 'scraper.py <email@up.edu>'")
+        print("Please use: 'scraper.py <email@up.edu> [<password>]'")
         web_driver.quit()
         exit()
 
-    except NoSuchElementException:
-        pass  # Login not required (i.e. user already logged in)? Debug with non-headless browser if errors propagate
+    email_value = sys.argv[1]
+    if len(sys.argv) == 2:
+        password_value = getpass()
+    else:
+        password_value = sys.argv[2]
+
+    # Enter email/username
+    email_input.send_keys(email_value)
+    web_driver.find_element_by_id("idSIButton9").click()
+    time.sleep(load_speed)
+
+    # Enter password
+    pass_input.send_keys(password_value)  # Hides password input to terminal
+    web_driver.find_element_by_id("idSIButton9").click()
+    time.sleep(load_speed)
+
+    # Navigate off login page
+    web_driver.find_element_by_id("idSIButton9").click()
 
 
 # Returns a mapping of course names to course objects
