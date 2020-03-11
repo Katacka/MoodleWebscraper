@@ -5,6 +5,7 @@ import string
 import sys
 import time
 import urllib.request
+from getpass import getpass
 from typing import Dict, List, Tuple, Iterator
 
 from selenium import webdriver
@@ -54,7 +55,7 @@ def setup_chrome_web_driver(load_speed: int) -> WebDriver:
 def query_moodle(web_driver: WebDriver) -> None:
     visit_page(web_driver, "https://learning.up.edu/moodle")
 
-    
+
 # Navigate through Moodle's login menus
 def login_to_moodle(web_driver: WebDriver, load_speed: int) -> None:
     # Login if necessary
@@ -67,7 +68,7 @@ def login_to_moodle(web_driver: WebDriver, load_speed: int) -> None:
 
         # Enter password
         pass_input = web_driver.find_element_by_id("i0118")
-        pass_input.send_keys(sys.argv[2])
+        pass_input.send_keys(getpass())  # Hides password input to terminal
         web_driver.find_element_by_id("idSIButton9").click()
         time.sleep(load_speed)
 
@@ -76,12 +77,12 @@ def login_to_moodle(web_driver: WebDriver, load_speed: int) -> None:
 
     except IndexError:
         print("ERROR: Improper CLI format")
-        print("Please use: 'scraper.py <email@up.edu> <password>'")
+        print("Please use: 'scraper.py <email@up.edu>'")
         web_driver.quit()
         exit()
 
     except NoSuchElementException:
-        pass  # Login not required..? Debug with non-headless browser if errors propagate
+        pass  # Login not required (i.e. user already logged in)? Debug with non-headless browser if errors propagate
 
 
 # Returns a mapping of course names to course objects
@@ -127,6 +128,7 @@ def scrape_course_metadata(web_driver: WebDriver, load_speed: int) -> Dict[str, 
         exit()
 
     return course_dict
+
 
 # Retrieve assignment and resource files from each specified course
 def download_course_data(web_driver: WebDriver, course_dict: Dict[str, Course]):
@@ -228,9 +230,9 @@ def download_url(url: str, original_file_name: str, max_attempts: int = 64) -> s
                 with open("files/" + file_name, "wb") as files_directory:
                     shutil.copyfileobj(response, files_directory)
                 return file_name
-            except FileExistsError: # Rename file to avoid conflicts
+            except FileExistsError:  # Rename file to avoid conflicts
                 file_name = f"{original_file_name} ({i})"
-                
+
         return file_name
 
 
@@ -297,9 +299,8 @@ def organize_files(course_dict: Dict[str, Course], root_directory_name: str) -> 
                 os.mkdir(course_path)
 
                 if course.html:
-                    f = open(course_path + course_name + ".html", "w")
-                    f.write(course.html)
-                    f.close()
+                    with open(course_path + course_name + ".html", "w") as course_html_file:
+                        course_html_file.write(course.html)
 
             for group_name in course.file_groups:
                 file_group = course.file_groups[group_name]
