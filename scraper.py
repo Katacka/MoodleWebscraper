@@ -46,7 +46,7 @@ def setup_chrome_web_driver(load_speed: int) -> WebDriver:
     options.add_experimental_option("prefs", prefs)
 
     # Create web driver
-    chrome_web_driver = webdriver.Chrome(chrome_options=options)
+    chrome_web_driver = webdriver.Chrome('./lib/chromedriver_80.0.3987.106', options=options)
     chrome_web_driver.implicitly_wait(load_speed)
     return chrome_web_driver
 
@@ -58,37 +58,36 @@ def query_moodle(web_driver: WebDriver) -> None:
 
 # Navigate through Moodle's login menus
 def login_to_moodle(web_driver: WebDriver, load_speed: int) -> None:
-    # Login if necessary
-    try:
-        email_input = web_driver.find_element_by_id("i0116")
-        pass_input = web_driver.find_element_by_id("i0118")
-    except NoSuchElementException:
-        return  # Login not required (i.e. user already logged in)? Debug with non-headless browser if errors propagate
-
     if len(sys.argv) < 2:
         print("ERROR: Improper CLI format")
         print("Please use: 'scraper.py <email@up.edu> [<password>]'")
         web_driver.quit()
-        exit()
+        exit(1)
 
     email_value = sys.argv[1]
     if len(sys.argv) == 2:
-        password_value = getpass()
+        password_value = getpass()  # Hides password input to terminal
     else:
         password_value = sys.argv[2]
 
-    # Enter email/username
-    email_input.send_keys(email_value)
-    web_driver.find_element_by_id("idSIButton9").click()
-    time.sleep(load_speed)
+    # Login if necessary
+    try:
+        # Enter email/username
+        email_input = web_driver.find_element_by_id("i0116")
+        email_input.send_keys(email_value)
+        web_driver.find_element_by_id("idSIButton9").click()
+        time.sleep(load_speed)
 
-    # Enter password
-    pass_input.send_keys(password_value)  # Hides password input to terminal
-    web_driver.find_element_by_id("idSIButton9").click()
-    time.sleep(load_speed)
+        # Enter password
+        pass_input = web_driver.find_element_by_id("i0118")
+        pass_input.send_keys(password_value)
+        web_driver.find_element_by_id("idSIButton9").click()
+        time.sleep(load_speed)
 
-    # Navigate off login page
-    web_driver.find_element_by_id("idSIButton9").click()
+        # Navigate off login page
+        web_driver.find_element_by_id("idSIButton9").click()
+    except NoSuchElementException:
+        return  # Login not required (i.e. user already logged in)? Debug with non-headless browser if errors propagate
 
 
 # Returns a mapping of course names to course objects
@@ -278,7 +277,7 @@ def format_course_name(text: str) -> str:
     return format_default(text)
 
 
-# Extract meaningful infromation from text
+# Extract meaningful information from text
 def format_default(text: str) -> str:
     text = remove_non_printable_chars(text)
     if "\n" in text:
