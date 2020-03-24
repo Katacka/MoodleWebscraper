@@ -111,12 +111,12 @@ def scrape_course_metadata(web_driver: WebDriver, load_speed: int) -> Dict[str, 
     try:
         # Set course overview to display all courses
         web_driver.find_element_by_id("groupingdropdown").click()
-        course_overview = web_driver.find_element_by_id("inst279425")
+        course_overview = web_driver.find_element_by_xpath("//*[starts-with(@id,'block-myoverview-')]")
         course_overview.find_element_by_xpath(".//a[@data-value='all']").click()
 
         # Scrape course metadata
         while True:
-            course_overview = web_driver.find_element_by_id("inst279425")
+            course_overview = web_driver.find_element_by_xpath("//*[starts-with(@id,'block-myoverview-')]")
             courses = course_overview.find_elements_by_class_name("coursename")
             course_dict.update(get_dict_entries_for_courses(courses))
 
