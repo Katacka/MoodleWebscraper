@@ -4,7 +4,7 @@ import shutil
 import string
 import sys
 import time
-import urllib.request
+import requests
 from typing import Dict, List, Tuple, Iterator
 
 from selenium import webdriver
@@ -147,7 +147,7 @@ def download_course_data(web_driver: WebDriver, course_dict: Dict[str, Course]):
 
             # Update course data
             course = download_assignments(web_driver, course, assignment_files)
-            course_dict[course_name] = download_resources(course, resource_files)
+            course_dict[course_name] = download_resources(web_driver, course, resource_files)
 
         except NoSuchElementException:
             print("ERROR: Unexpected course assignment format")
@@ -182,7 +182,7 @@ def download_assignments(web_driver: WebDriver, course: Course, assignments: Ite
         if downloads:
             course.file_groups[assign_name] = []
             for download_name, url in zip(download_names, download_urls):
-                name = download_url(url, format_default(download_name))
+                name = download_url(web_driver, url, format_default(download_name))
                 course.file_groups[assign_name].append(name)
 
     return course
@@ -207,21 +207,25 @@ def scrape_resources(resources: List[WebElement]) -> Iterator[Tuple[str, str]]:
 
 
 # Download resource files
-def download_resources(course: Course, resources: Iterator[Tuple[str, str]]) -> Course:
+def download_resources(web_driver: WebDriver, course: Course, resources: Iterator[Tuple[str, str]]) -> Course:
     for resource_name, resource_url in resources:
         resource_name = format_default(resource_name)
 
-        name = download_url(resource_url, resource_name)
+        name = download_url(web_driver, resource_url, resource_name)
         course.file_groups[name] = name
 
     return course
 
 
 # Retrieve a given file by url, return the file's name
-def download_url(url: str, original_file_name: str, max_attempts: int = 64) -> str:
+def download_url(web_driver: WebDriver, url: str, original_file_name: str, max_attempts: int = 64) -> str:
     all_downloads_finished()
 
-    with urllib.request.urlopen(url) as response:
+    cookies = {}
+    for cookie in web_driver.get_cookies():
+        cookies[cookie["name"]]=cookie["value"]
+
+    with requests.get(url, cookies=cookies) as response:
         file_name = original_file_name
         for i in range(1, max_attempts):
             try:
