@@ -1,6 +1,6 @@
 # UPMoodleWebscraper
 
-Webscraper utility purposed to retrieve all assignment and course resources for a given University of Portland student
+Webscraper utility purposed to retrieve all assignment and course resources for University of Portland students
 
 ## Ubuntu 16.04 Setup
 
