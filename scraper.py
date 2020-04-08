@@ -27,14 +27,18 @@ class Course:
 # Create a Selenium Chrome driver and configure options
 def setup_chrome_web_driver(load_speed: int) -> WebDriver:
     # Ensure directory for downloaded files exists
-    if not os.path.isdir("files"):
+    if os.path.isdir("files"):
+        if query_yes_no("Clear all data from the files/ directory?"):
+            shutil.rmtree("files")
+            os.mkdir("files")
+    else:
         os.mkdir("files")
 
     # Set web driver options
     options = webdriver.ChromeOptions()
     options.add_argument("--ignore-certificate-errors")
     options.add_argument("--incognito")
-    options.add_argument("--headless")
+    #options.add_argument("--headless")
     options.add_argument("--disable-extensions")
     options.add_argument("--safebrowsing-disable-extension-blacklist")
     options.add_argument("--safebrowsing-disable-download-protection")
@@ -46,11 +50,36 @@ def setup_chrome_web_driver(load_speed: int) -> WebDriver:
     options.add_experimental_option("prefs", prefs)
 
     # Create web driver
-    chrome_web_driver = webdriver.Chrome('./lib/chromedriver_80.0.3987.106', options=options)
+    chrome_web_driver = webdriver.Chrome(options=options)
     chrome_web_driver.implicitly_wait(load_speed)
     return chrome_web_driver
 
+# Ask a yes/no question via input() and return their answer
+def query_yes_no(question, default="yes"):
+    valid = {"yes": True, "y": True, "ye": True,
+             "no": False, "n": False}
+    
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
 
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")
+
+            
 # Attempt to visit the Moodle homepage
 def query_moodle(web_driver: WebDriver) -> None:
     visit_page(web_driver, "https://learning.up.edu/moodle")
@@ -232,12 +261,13 @@ def download_url(web_driver: WebDriver, url: str, original_file_name: str, max_a
     for cookie in web_driver.get_cookies():
         cookies[cookie["name"]]=cookie["value"]
 
-    with requests.get(url, cookies=cookies) as response:
+    with requests.get(url, cookies=cookies, stream=True) as response:
         file_name = original_file_name
         for i in range(1, max_attempts):
             try:
                 with open("files/" + file_name, "wb") as files_directory:
-                    shutil.copyfileobj(response, files_directory)
+                    response.raw.decode_content = True
+                    shutil.copyfileobj(response.raw, files_directory)
                 return file_name
             except FileExistsError:  # Rename file to avoid conflicts
                 file_name = f"{original_file_name} ({i})"
